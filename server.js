@@ -56,6 +56,16 @@ var Game = function(player1, player2) {
         player1.emit('gamelost');
         self.close();
     });
+
+    // When a player loses
+    player1.on('gamelost', function() {
+        player2.emit('gamewon');
+        self.close();
+    });
+    player2.on('gamelost', function() {
+        player1.emit('gamewon');
+        self.close();
+    });
 };
 
 Game.prototype.close = function() {
@@ -63,6 +73,7 @@ Game.prototype.close = function() {
         this.players[i].on('event', function() {});
         this.players[i].on('disconnect', function() {});
         this.players[i].on('gamewon', function() {});
+        this.players[i].on('gamelost', function() {});
     }
 };
 
