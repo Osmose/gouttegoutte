@@ -3,6 +3,7 @@ define(function(require) {
     var Entity = require('flux/entity');
     var Graphic = require('flux/graphics/graphic');
     var Loader = require('flux/resources/loader');
+    var Network = require('game/network');
 
     var GoutteWorld = require('game/world');
 
