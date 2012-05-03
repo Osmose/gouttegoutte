@@ -52,8 +52,13 @@ define(function(require) {
                 // CHECK FOR GAME LOSS
             } else {
                 this.goutte_y += 1;
+                p[0].y += 1;
+                p[1].y += 1;
                 if (this.collide(0, 1)) {
                     this.drop_next = true;
+                    this.playfield[p[0].y][p[0].x] = this.goutte1;
+                    this.playfield[p[1].y][p[1].x] = this.goutte2;
+                    this.fallWorld();
                 }
             }
             this.cur_delay = this.delay;
@@ -61,35 +66,35 @@ define(function(require) {
             this.cur_delay--;
         }
 
-        if (kb.pressed(kb.D) && !this.drop_next) {
-            this.down = true;
-            this.rotate += 1;
-            if (this.rotate > 3) this.rotate = 0;
-
-            if (this.rotate === 1 && this.goutte_y === 0) this.goutte_y = 1;
-            if (this.rotate === 2 &&
-                (this.goutte_x === 0 || this.playfield[this.goutte_y][this.goutte_x - 1] !== EMPTY)) {
-                this.goutte_x = 1;
-            }
-            if (this.rotate === 0 &&
-                (this.goutte_x === 5 || this.playfield[this.goutte_y][this.goutte_x + 1] !== EMPTY)) {
-                this.goutte_x = 4;
-            }
-            if (this.rotate === 3 &&
-                (this.goutte_y === 11 || this.playfield[this.goutte_y + 1][this.goutte_x] !== EMPTY)) {
-                this.goutte_y = 10;
-            }
-        }
-
         if (!this.drop_next) {
+            if (kb.pressed(kb.D)) {
+                this.down = true;
+                this.rotate += 1;
+                if (this.rotate > 3) this.rotate = 0;
+
+                if (this.rotate === 1 && this.goutte_y === 0) this.goutte_y = 1;
+                if (this.rotate === 2 &&
+                    (this.goutte_x === 0 || this.playfield[this.goutte_y][this.goutte_x - 1] !== EMPTY)) {
+                    this.goutte_x = 1;
+                }
+                if (this.rotate === 0 &&
+                    (this.goutte_x === 5 || this.playfield[this.goutte_y][this.goutte_x + 1] !== EMPTY)) {
+                    this.goutte_x = 4;
+                }
+                if (this.rotate === 3 &&
+                    (this.goutte_y === 11 || this.playfield[this.goutte_y + 1][this.goutte_x] !== EMPTY)) {
+                    this.goutte_y = 10;
+                }
+            }
+
             if (kb.pressed(kb.LEFT) && !this.collide(-1, 0)) this.goutte_x -= 1;
             if (kb.pressed(kb.RIGHT) && !this.collide(1, 0)) this.goutte_x += 1;
+
+            p = this.getPos();
+
+            this.playfield[p[0].y][p[0].x] = this.goutte1;
+            this.playfield[p[1].y][p[1].x] = this.goutte2;
         }
-
-        var p = this.getPos();
-
-        this.playfield[p[0].y][p[0].x] = this.goutte1;
-        this.playfield[p[1].y][p[1].x] = this.goutte2;
 
         kb.tick();
     };
@@ -110,6 +115,22 @@ define(function(require) {
             this.playfield[p[1].y][p[1].x] !== EMPTY;
     };
 
+    GoutteWorld.prototype.fallWorld = function() {
+        for (var x = 0; x < 6; x++) {
+            var last_solid = 12;
+            for (var y = 11; y >= 0; y--) {
+                if (this.playfield[y][x] !== EMPTY) {
+                    if (last_solid === null || last_solid === y + 1) {
+                        last_solid = y;
+                    } else {
+                        last_solid -= 1;
+                        this.playfield[last_solid][x] = this.playfield[y][x];
+                        this.playfield[y][x] = EMPTY;
+                    }
+                }
+            }
+        }
+    };
 
     GoutteWorld.prototype.getPos = function() {
         var g2x = this.goutte_x;
