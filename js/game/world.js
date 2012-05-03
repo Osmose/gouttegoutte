@@ -9,11 +9,17 @@ define(function(require) {
     var PURPLE = 5;
     var BLACK = 6;
 
+    var WORLD_HEIGHT = 12;
+    var WORLD_WIDTH = 6;
+
     function GoutteWorld() {
         DefaultWorld.call(this);
         this.playfield = [];
-        for (var y = 0; y < 12; y++) {
-            this.playfield[y] = [0, 0, 0, 0, 0, 0];
+        for (var y = 0; y < WORLD_HEIGHT; y++) {
+            this.playfield[y] = [];
+            for (var x = 0; x < WORLD_WIDTH; x++) {
+                this.playfield[y][x] = 0;
+            }
         }
 
         this.rotate = 0;
@@ -25,6 +31,9 @@ define(function(require) {
         this.drop_next = true;
         this.delay = 20;
         this.cur_delay = 20;
+
+        this.width = WORLD_WIDTH; // number of cells
+        this.height = WORLD_HEIGHT; // number of cells
 
         this.down = false;
     }
@@ -95,6 +104,14 @@ define(function(require) {
             this.playfield[p[0].y][p[0].x] = this.goutte1;
             this.playfield[p[1].y][p[1].x] = this.goutte2;
         }
+
+        var totalGroups = 0;
+        var countGroups;
+        while (countGroups = this.resolve() > 0) {
+            totalGroups += countGroups;
+        }
+
+        // Now do something with that score, like... KILLING YOUR ENNEMY!
 
         kb.tick();
     };
@@ -171,6 +188,113 @@ define(function(require) {
 
     GoutteWorld.prototype.event = function(event) {
 
+    };
+
+    /**
+     * Go through all bubbles, find groups of 4 or more bubbles and delete
+     * them. Return the number of groups that were deleted.
+     *
+     * @return int Number of groups of 4 or more bubbles this turn.
+     */
+    GoutteWorld.prototype.resolve = function() {
+        // a list of all groups
+        var groupsPool = [];
+
+        // a matrix of all groups, indexed by cells coordinates, default is false
+        var groups = [];
+        for (var y = 0; y < this.height; y++) {
+            groups[y] = [];
+            for (var x = 0; x < this.width; x++) {
+                groups[y][x] = false;
+            }
+        }
+
+        // go through all cells
+        for (var y = 0; y < this.height; y++) {
+            for (var x = 0; x < this.width; x++) {
+                if (this.playfield[y][x] === EMPTY) {
+                    continue;
+                }
+
+                // if the current cell has no group, create a new one
+                var group = null;
+                if (groups[y][x] !== false) {
+                    group = groups[y][x];
+                }
+                else {
+                    group = [[x, y]];
+                    groups[y][x] = group;
+                    groupsPool.push(group);
+                }
+
+                var color = this.playfield[y][x];
+
+                // check the bottom and right cells
+                if (this.playfield[y+1] && this.playfield[y+1][x] === color) {
+                    if (groups[y+1] && groups[y+1][x] !== false) {
+                        var nextGroup = groups[y+1][x];
+                        // add all cells of the other group to the current one
+                        for (var g in nextGroup) {
+                            group.push(nextGroup[g]);
+                        }
+                        // update all cells from the other group
+                        for (var g in nextGroup) {
+                            var i = nextGroup[g][0],
+                                j = nextGroup[g][1];
+                            groups[j][i] = group;
+                        }
+                    }
+                    else {
+                        group.push([x, y+1]);
+                        groups[y+1][x] = group;
+                    }
+                }
+                if (this.playfield[y][x+1] === color) {
+                    if (groups[y][x+1] !== false) {
+                        var nextGroup = groups[y][x+1];
+                        // add all cells of the other group to the current one
+                        for (var g in nextGroup) {
+                            group.push(nextGroup[g]);
+                        }
+                        // update all cells from the other group
+                        for (var g in nextGroup) {
+                            var i = nextGroup[g][0],
+                                j = nextGroup[g][1];
+                            groups[j][i] = group;
+                        }
+                    }
+                    else {
+                        group.push([x+1, y]);
+                        groups[y][x+1] = group;
+                    }
+                }
+            }
+        }
+
+        // check all groups and remove all complete groups
+        var fall = false;
+        var numberOfCompleteGroups = 0;
+        for (var g in groupsPool) {
+            if (groupsPool[g].length >= 4) {
+                this.removeGroup(groupsPool[g]);
+                fall = true;
+                numberOfCompleteGroups++;
+            }
+        }
+
+        if (fall) {
+            this.fallWorld();
+        }
+
+        return numberOfCompleteGroups;
+    };
+
+    GoutteWorld.prototype.removeGroup = function(group) {
+        for (var c in group) {
+            var x = group[c][0],
+                y = group[c][1];
+            this.playfield[y][x] = EMPTY;
+        }
     };
 
     return GoutteWorld;
