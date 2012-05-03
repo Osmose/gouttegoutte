@@ -1,14 +1,15 @@
-# House Blend
+# Goutte Goutte
 
-House Blend is a project template to help you hit the ground running when making Javascript-based games using [flux][].
+Goutte Goutte is a clone of the old [Puyo Puyo][puyo-puyo] game, made with Web technologies for the [Boot2Gecko OS][b2g]. 
+It is based on the [House Blend][house-blend] framework.
 
-[flux]: https://github.com/Osmose/flux
+## How to play
 
-## Hitting the Ground Running
+To be determined...
 
-1. `git clone --recursive git://github.com/Osmose/house-blend.git game_name`
-2. Open `game_name/js/game/game.js` in your favorite code editor.
-3. There is no step 3.
+[house-blend]: https://github.com/Osmose/house-blend
+[puyo-puyo]: https://fr.wikipedia.org/wiki/Puyo_Puyo
+[b2g]: https://wiki.mozilla.org/B2G
 
 # License
 
