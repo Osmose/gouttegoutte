@@ -33,18 +33,11 @@ define(function(require) {
     GoutteWorld.prototype.tick = function() {
         var kb = this.engine.kb;
 
-        var g2x = this.goutte_x;
-        var g2y = this.goutte_y;
-        switch (this.rotate) {
-        case 0: g2x += 1; break;
-        case 1: g2y -= 1; break;
-        case 2: g2x -= 1; break;
-        case 3: g2y += 1; break;
-        }
+        var p = this.getPos();
 
         if (!this.drop_next) {
-            this.playfield[this.goutte_y][this.goutte_x] = 0;
-            this.playfield[g2y][g2x] = 0;
+            this.playfield[p[0].y][p[0].x] = 0;
+            this.playfield[p[1].y][p[1].x] = 0;
         }
 
         if (this.cur_delay <= 0) {
@@ -59,10 +52,7 @@ define(function(require) {
                 // CHECK FOR GAME LOSS
             } else {
                 this.goutte_y += 1;
-                g2y += 1;
-                var g1collide = this.goutte_y === 11 || this.playfield[this.goutte_y + 1][this.goutte_x] !== EMPTY;
-                var g2collide = g2y === 11 || this.playfield[g2y + 1][g2x] !== EMPTY;
-                if (g1collide || g2collide) {
+                if (this.collide(0, 1)) {
                     this.drop_next = true;
                 }
             }
@@ -92,11 +82,38 @@ define(function(require) {
         }
 
         if (!this.drop_next) {
-
+            if (kb.pressed(kb.LEFT) && !this.collide(-1, 0)) this.goutte_x -= 1;
+            if (kb.pressed(kb.RIGHT) && !this.collide(1, 0)) this.goutte_x += 1;
         }
 
-        g2x = this.goutte_x;
-        g2y = this.goutte_y;
+        var p = this.getPos();
+
+        this.playfield[p[0].y][p[0].x] = this.goutte1;
+        this.playfield[p[1].y][p[1].x] = this.goutte2;
+
+        kb.tick();
+    };
+
+    GoutteWorld.prototype.collide = function(dx, dy) {
+        var p = this.getPos();
+        p[0].x += dx;
+        p[1].x += dx;
+        p[0].y += dy;
+        p[1].y += dy;
+
+        if (p[0].x < 0 || p[0].x > 5) return true;
+        if (p[1].x < 0 || p[1].x > 5) return true;
+        if (p[0].y < 0 || p[0].y > 11) return true;
+        if (p[1].y < 0 || p[1].y > 11) return true;
+
+        return this.playfield[p[0].y][p[0].x] !== EMPTY ||
+            this.playfield[p[1].y][p[1].x] !== EMPTY;
+    };
+
+
+    GoutteWorld.prototype.getPos = function() {
+        var g2x = this.goutte_x;
+        var g2y = this.goutte_y;
         switch (this.rotate) {
         case 0: g2x += 1; break;
         case 1: g2y -= 1; break;
@@ -104,10 +121,7 @@ define(function(require) {
         case 3: g2y += 1; break;
         }
 
-        this.playfield[this.goutte_y][this.goutte_x] = this.goutte1;
-        this.playfield[g2y][g2x] = this.goutte2;
-
-        kb.tick();
+        return [{x: this.goutte_x, y: this.goutte_y}, {x: g2x, y: g2y}];
     };
 
 
